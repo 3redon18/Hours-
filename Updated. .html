@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hours Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --desk: #E7E1D2;
+    --sheet: #FCFBF5;
+    --bar: #DCEEDC;
+    --ink: #1B2A20;
+    --ink-soft: #6B7365;
+    --amber: #C98A2E;
+    --amber-bg: #FBF0DC;
+    --pen-green: #2E6B41;
+    --pen-green-bg: #E5F0E3;
+    --pen-red: #A6402E;
+    --pen-red-bg: #F6E7E2;
+    --rule: #CFC6AF;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    background: var(--desk);
+  }
+  body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    padding: 24px 14px 60px;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .mono { font-family: 'IBM Plex Mono', SFMono-Regular, Consolas, Menlo, monospace; }
+
+  .sheet {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--sheet);
+    box-shadow: 0 1px 2px rgba(27,42,32,0.06), 0 8px 24px rgba(27,42,32,0.10);
+    background-image:
+      radial-gradient(circle 4.5px at 16px 16px, var(--desk) 4px, transparent 4.5px),
+      radial-gradient(circle 4.5px at calc(100% - 16px) 16px, var(--desk) 4px, transparent 4.5px);
+    background-repeat: repeat-y;
+    background-size: 100% 28px;
+    padding: 20px 38px 30px;
+  }
+
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+  .masthead .title {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin: 0 0 4px;
+  }
+  .masthead h1 {
+    font-size: 21px;
+    font-weight: 600;
+    margin: 0;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .masthead .clock {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .section {
+    padding: 18px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .section:last-of-type { border-bottom: none; padding-bottom: 0; }
+  .section h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  /* Today */
+  .today-hero { text-align: left; padding: 2px 0 4px; }
+  .today-hero .big {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .today-hero .sub { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+  .banked-positive { color: var(--pen-green); }
+  .banked-negative { color: var(--pen-red); }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 12px 0 5px;
+  }
+  input, select, button { font-family: inherit; font-size: 14px; color: var(--ink); }
+  input[type="date"], input[type="number"] {
+    width: 100%;
+    padding: 7px 2px;
+    border: none;
+    border-bottom: 1.5px solid var(--rule);
+    border-radius: 0;
+    background: transparent;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  input[type="number"]:focus, input[type="date"]:focus, select:focus {
+    outline: none;
+    border-bottom-color: var(--ink);
+  }
+  select {
+    padding: 7px 4px;
+    border: none;
+    border-bottom: 1.5px solid var(--rule);
+    background: transparent;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .time-parts { display: flex; gap: 6px; align-items: center; }
+  .time-parts input, .time-parts select { width: auto; flex: 1; text-align: center; }
+  .meridiem-fixed {
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+    padding: 7px 8px;
+    white-space: nowrap;
+    border-bottom: 1.5px solid transparent;
+  }
+  .row { display: flex; gap: 16px; }
+  .row > div { flex: 1; }
+
+  .breaks-list { margin-top: 10px; }
+  .break-row-full {
+    border: 1px solid var(--rule);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: rgba(220,238,220,0.25);
+  }
+  .break-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .break-summary {
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--pen-green);
+  }
+  .small-btn {
+    border: 1px solid var(--pen-red);
+    background: none; color: var(--pen-red);
+    padding: 2px 8px; cursor: pointer; line-height: 1.6; font-size: 13px;
+  }
+  .link-btn {
+    background: none; border: none; color: var(--ink);
+    font-size: 13px; cursor: pointer; padding: 4px 0; font-weight: 600;
+    border-bottom: 1px solid var(--ink);
+  }
+  .primary-btn {
+    width: 100%; margin-top: 16px; background: var(--ink); color: var(--sheet);
+    border: 1px solid var(--ink); padding: 11px; font-weight: 600; cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em;
+  }
+  .primary-btn:active { opacity: 0.85; }
+  .secondary-btn {
+    width: 100%; margin-top: 10px; background: none; color: var(--ink);
+    border: 1.5px solid var(--ink); padding: 9px; font-weight: 600; cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.02em;
+  }
+
+  /* Week strip */
+  .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; border: 1px solid var(--rule); }
+  .day-card {
+    padding: 8px 3px;
+    text-align: center;
+    border-right: 1px solid var(--rule);
+  }
+  .day-card:last-child { border-right: none; }
+  .day-card.today { background: var(--amber-bg); }
+  .day-card.future { opacity: 0.35; }
+  .day-card .dname { font-size: 11px; color: var(--ink-soft); }
+  .day-card .ddate { font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--ink-soft); margin-bottom: 5px; }
+  .day-card .dval { font-size: 12px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .day-card .ddiff { font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+
+  .all-time { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+  .all-time .val { font-weight: 700; font-family: 'IBM Plex Mono', monospace; font-size: 15px; }
+
+  .entries-sheet {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--bar) 0px, var(--bar) 26px,
+      transparent 26px, transparent 52px
+    );
+  }
+  .entry {
+    padding: 8px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 26px;
+  }
+  .entry .date { font-weight: 600; font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+  .entry .details { font-size: 11.5px; color: var(--ink-soft); margin-top: 1px; }
+  .entry .net { font-weight: 700; font-size: 13px; text-align: right; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; }
+  .entry .diff { font-size: 11px; text-align: right; font-family: 'IBM Plex Mono', monospace; }
+  .del-x { border: none; background: none; color: var(--ink-soft); font-size: 15px; cursor: pointer; padding: 2px 4px; }
+  .empty-state { color: var(--ink-soft); font-size: 13px; text-align: left; padding: 10px 4px; }
+  .settings-toggle { font-size: 12px; color: var(--ink-soft); text-align: right; cursor: pointer; margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; }
+  .hidden { display: none; }
+  .status { font-size: 12px; color: var(--ink-soft); margin-top: 8px; text-align: center; font-family: 'IBM Plex Mono', monospace; }
+  .logged-today {
+    background: var(--pen-green-bg);
+    border: 1px solid var(--pen-green);
+    padding: 14px;
+  }
+  .logged-today .amt { font-size: 21px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+  .lunch-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--amber);
+    padding: 4px 0 4px 10px;
+    margin-top: 14px;
+    line-height: 1.4;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    margin: 10px 0 0;
+  }
+  .checkbox-label input[type="checkbox"] { width: auto; accent-color: var(--ink); }
+  .editing-note {
+    font-size: 12px;
+    color: var(--amber);
+    background: var(--amber-bg);
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .editing-note .link-btn { border-bottom: 1px solid var(--amber); color: var(--amber); font-size: 12px; padding: 0; }
+  .edit-btn {
+    border: none; background: none; color: var(--ink-soft); font-size: 12px;
+    cursor: pointer; padding: 2px 4px; font-family: 'IBM Plex Mono', monospace;
+    text-decoration: underline;
+  }
+  .entry-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .day-card.clickable { cursor: pointer; }
+  .day-card.clickable:hover { background: var(--bar); }
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .week-header h2 { margin: 0; min-width: 120px; text-align: center; }
+  .week-nav-btn {
+    border: 1px solid var(--rule);
+    background: none;
+    color: var(--ink);
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+  .week-nav-btn:hover { border-color: var(--ink); }
+  .week-nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .week-nav-btn:disabled:hover { border-color: var(--rule); }
+  .search-day-row {
+    text-align: center;
+    margin: -2px 0 14px;
+  }
+  .search-day-row label { text-align: center; }
+  .search-day-row input { max-width: 200px; margin: 0 auto; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="masthead">
+    <div>
+      <div class="title">Hours Log</div>
+      <h1 id="greeting">Welcome</h1>
+    </div>
+    <div class="clock mono" id="liveClock">--:--:--</div>
+  </div>
+
+  <!-- TODAY / TIME REMAINING -->
+  <div class="section" id="todayCard">
+    <h2>Today</h2>
+    <div id="todayLive"></div>
+  </div>
+
+  <!-- WEEK STRIP -->
+  <div class="section">
+    <div class="week-header">
+      <button class="week-nav-btn" id="prevWeekBtn" aria-label="Previous week">←</button>
+      <h2 id="weekLabel">This week</h2>
+      <button class="week-nav-btn" id="nextWeekBtn" aria-label="Next week">→</button>
+      <button class="week-nav-btn" id="searchToggleBtn" aria-label="Find a day">&#128269;</button>
+    </div>
+    <div id="searchDayRow" class="search-day-row hidden">
+      <label>Jump to a date</label>
+      <input type="date" id="searchDayInput">
+    </div>
+    <div class="week-strip" id="weekStrip"></div>
+    <div class="all-time">
+      <span>All-time banked</span>
+      <span class="val" id="allTimeBanked">0h 0m</span>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT AN ENTRY -->
+  <div class="section" id="logDaySection">
+    <div class="settings-toggle" id="settingsToggle">settings ▾</div>
+    <div id="settingsPanel" class="hidden">
+      <label>Target hours per work day</label>
+      <input type="number" id="targetHours" step="0.25" min="0" value="8">
+      <label>Target hours on Friday</label>
+      <input type="number" id="fridayTargetHours" step="0.25" min="0" value="4">
+    </div>
+
+    <h2 id="logDayHeading">Log a day</h2>
+    <div class="editing-note hidden" id="editingNote">
+      Editing <span id="editingDateLabel"></span> — <button class="link-btn" id="cancelEditBtn">cancel</button>
+    </div>
+    <label>Date</label>
+    <input type="date" id="entryDate">
+
+    <label>Start time (AM)</label>
+    <div class="time-parts">
+      <input type="number" id="startHour" min="1" max="12" placeholder="9">
+      <span>:</span>
+      <input type="number" id="startMinute" min="0" max="59" placeholder="00">
+      <span class="meridiem-fixed">AM</span>
+    </div>
+
+    <div class="lunch-note">You get a 30-minute lunch, paid — it won't subtract from your total.</div>
+    <label class="checkbox-label">
+      <input type="checkbox" id="lunchTaken"> I took my lunch break
+    </label>
+    <div id="lunchTimeRow" class="hidden">
+      <label>Lunch break time</label>
+      <div class="time-parts">
+        <input type="number" id="lunchHour" min="1" max="12" placeholder="12">
+        <span>:</span>
+        <input type="number" id="lunchMinute" min="0" max="59" placeholder="00">
+        <select id="lunchMeridiem">
+          <option value="AM">AM</option>
+          <option value="PM" selected>PM</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="breaks-list" id="breaksList"></div>
+    <button class="link-btn" id="addBreakBtn">+ add another break</button>
+
+    <label>End time</label>
+    <div class="time-parts">
+      <input type="number" id="endHour" min="1" max="12" placeholder="5">
+      <span>:</span>
+      <input type="number" id="endMinute" min="0" max="59" placeholder="00">
+      <select id="endMeridiem">
+        <option value="AM">AM</option>
+        <option value="PM" selected>PM</option>
+      </select>
+    </div>
+
+    <button class="primary-btn" id="saveEntryBtn">Save entry</button>
+    <div class="status" id="statusMsg"></div>
+  </div>
+
+  <div class="section">
+    <h2>Entries</h2>
+    <div class="entries-sheet" id="entriesList"></div>
+  </div>
+
+</div>
+
+<script>
+let entries = [];
+let targetHoursPerDay = 8;
+let fridayTargetHours = 4;
+let breakRows = 0;
+let editingId = null;
+let weekOffset = 0;
+
+const $ = (id) => document.getElementById(id);
+
+function fmtHM(totalMinutes) {
+  const sign = totalMinutes < 0 ? '-' : '';
+  totalMinutes = Math.abs(Math.round(totalMinutes));
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${sign}${h}h ${m}m`;
+}
+
+function fmtClock(totalMinutes) {
+  totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+  let h = Math.floor(totalMinutes / 60);
+  const m = Math.round(totalMinutes % 60);
+  const mer = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2,'0')} ${mer}`;
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function dateStr(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function todayStr() { return dateStr(new Date()); }
+
+function parseDateStr(s) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function getTargetForDate(ds) {
+  const day = parseDateStr(ds).getDay(); // 0 Sun ... 5 Fri ... 6 Sat
+  return day === 5 ? fridayTargetHours : targetHoursPerDay;
+}
+
+function to24Minutes(hour12, minute, meridiem) {
+  let h = hour12 % 12;
+  if (meridiem === 'PM') h += 12;
+  return h * 60 + (minute || 0);
+}
+
+function computeNet(startHour, startMinute, endHour, endMinute, endMeridiem, breakMins) {
+  const startTotal = to24Minutes(startHour, startMinute, 'AM');
+  let endTotal = to24Minutes(endHour, endMinute, endMeridiem);
+  if (endTotal < startTotal) endTotal += 24 * 60;
+  const grossMin = endTotal - startTotal;
+  return (grossMin - breakMins) / 60;
+}
+
+function breakRowDuration(id) {
+  const row = document.getElementById(id);
+  if (!row) return 0;
+  const sh = parseInt(row.querySelector('.bstart-hour').value, 10);
+  const sm = parseInt(row.querySelector('.bstart-min').value || '0', 10) || 0;
+  const smer = row.querySelector('.bstart-mer').value;
+  const eh = parseInt(row.querySelector('.bend-hour').value, 10);
+  const em = parseInt(row.querySelector('.bend-min').value || '0', 10) || 0;
+  const emer = row.querySelector('.bend-mer').value;
+  if (!sh || !eh) return 0;
+  let startTotal = to24Minutes(sh, sm, smer);
+  let endTotal = to24Minutes(eh, em, emer);
+  if (endTotal < startTotal) endTotal += 24 * 60;
+  return Math.max(0, endTotal - startTotal);
+}
+
+function updateBreakRowSummary(id) {
+  const mins = breakRowDuration(id);
+  const row = document.getElementById(id);
+  if (!row) return;
+  const summary = row.querySelector('.break-summary');
+  summary.textContent = mins > 0 ? `${fmtHM(mins)} — added to what you owe` : '';
+  renderTodayLive();
+}
+
+function addBreakRow(saved) {
+  breakRows++;
+  const id = 'break_' + breakRows;
+  const div = document.createElement('div');
+  div.className = 'break-row-full';
+  div.id = id;
+  const s = saved || {};
+  div.innerHTML = `
+    <div class="break-row-header">
+      <span class="break-summary"></span>
+      <button class="small-btn" onclick="document.getElementById('${id}').remove()">remove</button>
+    </div>
+    <div class="row">
+      <div>
+        <label>Break start</label>
+        <div class="time-parts">
+          <input type="number" class="bstart-hour" min="1" max="12" placeholder="10" value="${s.startHour || ''}">
+          <span>:</span>
+          <input type="number" class="bstart-min" min="0" max="59" placeholder="00" value="${s.startMinute || ''}">
+          <select class="bstart-mer">
+            <option value="AM" ${(!s.startMeridiem || s.startMeridiem === 'AM') ? 'selected' : ''}>AM</option>
+            <option value="PM" ${s.startMeridiem === 'PM' ? 'selected' : ''}>PM</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>Break end</label>
+        <div class="time-parts">
+          <input type="number" class="bend-hour" min="1" max="12" placeholder="10" value="${s.endHour || ''}">
+          <span>:</span>
+          <input type="number" class="bend-min" min="0" max="59" placeholder="15" value="${s.endMinute || ''}">
+          <select class="bend-mer">
+            <option value="AM" ${(!s.endMeridiem || s.endMeridiem === 'AM') ? 'selected' : ''}>AM</option>
+            <option value="PM" ${s.endMeridiem === 'PM' ? 'selected' : ''}>PM</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  `;
+  $('breaksList').appendChild(div);
+  div.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', () => updateBreakRowSummary(id));
+    el.addEventListener('change', () => updateBreakRowSummary(id));
+  });
+  updateBreakRowSummary(id);
+}
+
+function getAllBreakMinutes() {
+  let total = 0;
+  document.querySelectorAll('#breaksList .break-row-full').forEach(row => {
+    total += breakRowDuration(row.id);
+  });
+  return total;
+}
+
+function collectBreaksData() {
+  const breaks = [];
+  document.querySelectorAll('#breaksList .break-row-full').forEach(row => {
+    const startHour = parseInt(row.querySelector('.bstart-hour').value, 10);
+    const startMinute = parseInt(row.querySelector('.bstart-min').value || '0', 10) || 0;
+    const startMeridiem = row.querySelector('.bstart-mer').value;
+    const endHour = parseInt(row.querySelector('.bend-hour').value, 10);
+    const endMinute = parseInt(row.querySelector('.bend-min').value || '0', 10) || 0;
+    const endMeridiem = row.querySelector('.bend-mer').value;
+    if (startHour && endHour) {
+      breaks.push({ startHour, startMinute, startMeridiem, endHour, endMinute, endMeridiem });
+    }
+  });
+  return breaks;
+}
+
+function greet() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function updateClock() {
+  const now = new Date();
+  $('liveClock').textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  $('greeting').textContent = greet();
+  renderTodayLive();
+}
+
+function findEntryForDate(d) {
+  return entries.find(e => e.date === d);
+}
+
+function renderTodayLive() {
+  const today = todayStr();
+  const existing = findEntryForDate(today);
+  const container = $('todayLive');
+
+  if (existing) {
+    const diff = existing.net - existing.target;
+    container.innerHTML = `
+      <div class="logged-today" id="loggedTodayBox" style="cursor:pointer;">
+        <div class="amt">${fmtHM(existing.net * 60)} worked today</div>
+        <div class="sub ${diff >= 0 ? 'banked-positive' : 'banked-negative'}">${diff >= 0 ? '+' : ''}${fmtHM(diff * 60)} vs target</div>
+      </div>
+    `;
+    $('loggedTodayBox').addEventListener('click', () => editEntry(existing.id));
+    return;
+  }
+
+  const startHour = parseInt($('liveStartHour')?.value ?? '', 10);
+  const startMinute = parseInt($('liveStartMinute')?.value ?? '0', 10) || 0;
+  const lunchTakenLive = $('liveLunchTaken')?.checked ?? false;
+  const lunchHourLive = $('liveLunchHour')?.value ?? '';
+  const lunchMinuteLive = $('liveLunchMinute')?.value ?? '';
+  const lunchMeridiemLive = $('liveLunchMeridiem')?.value ?? 'PM';
+  const breakMins = parseFloat($('liveBreakMins')?.value ?? '0') || 0;
+
+  let html = '';
+  if (startHour) {
+    const now = new Date();
+    const nowTotal = now.getHours() * 60 + now.getMinutes();
+    const startTotal = to24Minutes(startHour, startMinute, 'AM');
+    const elapsedGross = Math.max(0, nowTotal - startTotal);
+    // Lunch is included in the schedule and never subtracted; only additional breaks reduce net time.
+    const elapsedNet = elapsedGross - breakMins;
+    const todayTarget = getTargetForDate(today);
+    const remainingMin = todayTarget * 60 - elapsedNet;
+    const finishClock = startTotal + todayTarget * 60 + breakMins;
+
+    html += `<div class="today-hero">
+      <div class="big mono ${remainingMin >= 0 ? '' : 'banked-positive'}">${remainingMin >= 0 ? fmtHM(remainingMin) : fmtHM(-remainingMin) + ' over'}</div>
+      <div class="sub">${remainingMin >= 0 ? `left of ${todayTarget}h target · finish around ` + fmtClock(finishClock) : 'past your target for today'}</div>
+    </div>`;
+  } else {
+    html += `<div class="empty-state">Enter your start time below to see time left in your day.</div>`;
+  }
+
+  html += `
+    <label>Start time (AM)</label>
+    <div class="time-parts">
+      <input type="number" id="liveStartHour" min="1" max="12" placeholder="9" value="${startHour || ''}">
+      <span>:</span>
+      <input type="number" id="liveStartMinute" min="0" max="59" placeholder="00" value="${startMinute || ''}">
+      <span class="meridiem-fixed">AM</span>
+    </div>
+
+    <div class="lunch-note">You get a 30-minute lunch, paid — it won't subtract from your total.</div>
+    <label class="checkbox-label">
+      <input type="checkbox" id="liveLunchTaken" ${lunchTakenLive ? 'checked' : ''}> I took my lunch break
+    </label>
+    <div id="liveLunchTimeRow" class="${lunchTakenLive ? '' : 'hidden'}">
+      <label>Lunch break time</label>
+      <div class="time-parts">
+        <input type="number" id="liveLunchHour" min="1" max="12" placeholder="12" value="${lunchHourLive}">
+        <span>:</span>
+        <input type="number" id="liveLunchMinute" min="0" max="59" placeholder="00" value="${lunchMinuteLive}">
+        <select id="liveLunchMeridiem">
+          <option value="AM" ${lunchMeridiemLive === 'AM' ? 'selected' : ''}>AM</option>
+          <option value="PM" ${lunchMeridiemLive === 'PM' ? 'selected' : ''}>PM</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Additional breaks so far (min)</label>
+    <input type="number" id="liveBreakMins" min="0" placeholder="0" value="${breakMins || ''}">
+
+    <button class="secondary-btn" id="logTodayBtn">Clock out now</button>
+  `;
+
+  container.innerHTML = html;
+
+  ['liveStartHour','liveStartMinute','liveBreakMins'].forEach(id => {
+    $(id).addEventListener('input', renderTodayLive);
+  });
+  $('liveLunchTaken').addEventListener('change', renderTodayLive);
+  if ($('liveLunchHour')) $('liveLunchHour').addEventListener('input', renderTodayLive);
+  if ($('liveLunchMinute')) $('liveLunchMinute').addEventListener('input', renderTodayLive);
+  if ($('liveLunchMeridiem')) $('liveLunchMeridiem').addEventListener('change', renderTodayLive);
+  $('logTodayBtn').addEventListener('click', logTodayNow);
+}
+
+async function logTodayNow() {
+  const startHour = parseInt($('liveStartHour').value, 10);
+  const startMinute = parseInt($('liveStartMinute').value || '0', 10) || 0;
+  const breakMins = parseFloat($('liveBreakMins').value || '0') || 0;
+  if (!startHour) return;
+
+  const lunchTaken = $('liveLunchTaken').checked;
+  const lunchHour = lunchTaken ? (parseInt($('liveLunchHour').value, 10) || null) : null;
+  const lunchMinute = lunchTaken ? (parseInt($('liveLunchMinute').value || '0', 10) || 0) : null;
+  const lunchMeridiem = lunchTaken ? $('liveLunchMeridiem').value : null;
+
+  const now = new Date();
+  let endHour = now.getHours() % 12; if (endHour === 0) endHour = 12;
+  const endMinute = now.getMinutes();
+  const endMeridiem = now.getHours() >= 12 ? 'PM' : 'AM';
+
+  const net = computeNet(startHour, startMinute, endHour, endMinute, endMeridiem, breakMins);
+
+  entries.push({
+    id: Date.now(),
+    date: todayStr(),
+    startHour, startMinute,
+    endHour, endMinute, endMeridiem,
+    breakMins, net,
+    lunchTaken, lunchHour, lunchMinute, lunchMeridiem,
+    target: getTargetForDate(todayStr())
+  });
+
+  await saveState();
+  renderAll();
+}
+
+function getMondayOfWeek(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+function renderWeekStrip() {
+  const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const monday = getMondayOfWeek(new Date());
+  monday.setDate(monday.getDate() - weekOffset * 7);
+  const today = todayStr();
+  const strip = $('weekStrip');
+  strip.innerHTML = '';
+
+  let label = 'This week';
+  if (weekOffset === 1) label = 'Last week';
+  else if (weekOffset >= 2) label = `${weekOffset} weeks ago`;
+  $('weekLabel').textContent = label;
+  $('nextWeekBtn').disabled = weekOffset === 0;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const ds = dateStr(d);
+    const isFuture = ds > today;
+    const isToday = ds === today;
+    const entry = findEntryForDate(ds);
+
+    const div = document.createElement('div');
+    div.className = 'day-card' + (isToday ? ' today' : '') + (isFuture ? ' future' : '') + (entry ? ' has-entry' : '') + (!isFuture ? ' clickable' : '');
+
+    let valHtml = '<div class="dval">—</div>';
+    let diffHtml = '';
+    if (entry) {
+      const diff = entry.net - entry.target;
+      valHtml = `<div class="dval">${fmtHM(entry.net * 60)}</div>`;
+      diffHtml = `<div class="ddiff ${diff >= 0 ? 'banked-positive' : 'banked-negative'}">${diff >= 0 ? '+' : ''}${fmtHM(diff * 60)}</div>`;
+    }
+
+    div.innerHTML = `
+      <div class="dname">${labels[i]}</div>
+      <div class="ddate">${d.getMonth()+1}/${d.getDate()}</div>
+      ${valHtml}
+      ${diffHtml}
+    `;
+    if (!isFuture) {
+      div.addEventListener('click', () => selectDay(ds));
+    }
+    strip.appendChild(div);
+  }
+
+  let totalWorked = 0, totalTarget = 0;
+  entries.forEach(e => { totalWorked += e.net; totalTarget += e.target; });
+  const banked = (totalWorked - totalTarget) * 60;
+  const bankedEl = $('allTimeBanked');
+  bankedEl.textContent = (banked >= 0 ? '+' : '') + fmtHM(banked);
+  bankedEl.className = 'val ' + (banked >= 0 ? 'banked-positive' : 'banked-negative');
+}
+
+function renderEntriesList() {
+  const list = $('entriesList');
+  list.innerHTML = '';
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state">Nothing logged yet — clock in above to start your first entry.</div>';
+    return;
+  }
+  const sorted = [...entries].sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+  sorted.forEach(e => {
+    const diff = e.net - e.target;
+    const div = document.createElement('div');
+    div.className = 'entry';
+    const breaksStr = e.breakMins > 0 ? `, ${fmtHM(e.breakMins)} additional break` : '';
+    const lunchStr = e.lunchTaken ? (e.lunchHour ? `, lunch at ${e.lunchHour}:${pad(e.lunchMinute)} ${e.lunchMeridiem}` : ', lunch taken') : '';
+    const startStr = `${e.startHour}:${pad(e.startMinute)} AM`;
+    const endStr = `${e.endHour}:${pad(e.endMinute)} ${e.endMeridiem}`;
+    div.innerHTML = `
+      <div>
+        <div class="date">${e.date}</div>
+        <div class="details">${startStr}–${endStr}${lunchStr}${breaksStr}</div>
+      </div>
+      <div>
+        <div class="net">${fmtHM(e.net * 60)}</div>
+        <div class="diff ${diff >= 0 ? 'banked-positive' : 'banked-negative'}">${diff >= 0 ? '+' : ''}${fmtHM(diff * 60)}</div>
+      </div>
+      <div class="entry-actions">
+        <button class="edit-btn" data-id="${e.id}">edit</button>
+        <button class="del-x" data-id="${e.id}">✕</button>
+      </div>
+    `;
+    div.querySelector('.edit-btn').addEventListener('click', () => editEntry(e.id));
+    div.querySelector('.del-x').addEventListener('click', () => deleteEntry(e.id));
+    list.appendChild(div);
+  });
+}
+
+function renderAll() {
+  renderWeekStrip();
+  renderTodayLive();
+  renderEntriesList();
+}
+
+async function saveState() {
+  try {
+    await window.storage.set('hours-tracker-data', JSON.stringify({ entries, targetHoursPerDay, fridayTargetHours }), false);
+  } catch (err) {
+    console.error('Save failed', err);
+    $('statusMsg').textContent = 'Could not save — data may not persist.';
+  }
+}
+
+async function loadState() {
+  try {
+    const result = await window.storage.get('hours-tracker-data', false);
+    if (result && result.value) {
+      const data = JSON.parse(result.value);
+      entries = data.entries || [];
+      targetHoursPerDay = data.targetHoursPerDay ?? 8;
+      fridayTargetHours = data.fridayTargetHours ?? 4;
+      $('targetHours').value = targetHoursPerDay;
+      $('fridayTargetHours').value = fridayTargetHours;
+    }
+  } catch (err) {
+    // no existing data yet
+  }
+  renderAll();
+}
+
+async function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  await saveState();
+  renderAll();
+}
+
+function clearEditingState() {
+  editingId = null;
+  $('saveEntryBtn').textContent = 'Save entry';
+  $('editingNote').classList.add('hidden');
+}
+
+function selectDay(ds) {
+  const entry = findEntryForDate(ds);
+  if (entry) {
+    editEntry(entry.id);
+    return;
+  }
+  clearEditingState();
+  $('breaksList').innerHTML = '';
+  $('lunchTaken').checked = false;
+  $('lunchTimeRow').classList.add('hidden');
+  $('entryDate').value = ds;
+  $('startHour').value = '';
+  $('startMinute').value = '';
+  $('endHour').value = '';
+  $('endMinute').value = '';
+  $('logDaySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function editEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+
+  editingId = id;
+  $('entryDate').value = e.date;
+  $('startHour').value = e.startHour;
+  $('startMinute').value = pad(e.startMinute);
+  $('endHour').value = e.endHour;
+  $('endMinute').value = pad(e.endMinute);
+  $('endMeridiem').value = e.endMeridiem;
+
+  $('lunchTaken').checked = !!e.lunchTaken;
+  $('lunchTimeRow').classList.toggle('hidden', !e.lunchTaken);
+  $('lunchHour').value = e.lunchTaken && e.lunchHour ? e.lunchHour : '';
+  $('lunchMinute').value = e.lunchTaken && e.lunchMinute != null ? pad(e.lunchMinute) : '';
+  $('lunchMeridiem').value = e.lunchMeridiem || 'PM';
+
+  $('breaksList').innerHTML = '';
+  (e.breaks || []).forEach(b => addBreakRow(b));
+
+  $('saveEntryBtn').textContent = 'Update entry';
+  $('editingDateLabel').textContent = e.date;
+  $('editingNote').classList.remove('hidden');
+
+  $('logDaySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('prevWeekBtn').addEventListener('click', () => {
+  weekOffset++;
+  renderWeekStrip();
+});
+
+$('nextWeekBtn').addEventListener('click', () => {
+  if (weekOffset > 0) {
+    weekOffset--;
+    renderWeekStrip();
+  }
+});
+
+$('searchToggleBtn').addEventListener('click', () => {
+  const row = $('searchDayRow');
+  row.classList.toggle('hidden');
+  if (!row.classList.contains('hidden')) {
+    $('searchDayInput').focus();
+    if (typeof $('searchDayInput').showPicker === 'function') {
+      try { $('searchDayInput').showPicker(); } catch (e) {}
+    }
+  }
+});
+
+$('searchDayInput').addEventListener('change', () => {
+  const val = $('searchDayInput').value;
+  if (!val) return;
+  const today = todayStr();
+  if (val > today) {
+    $('searchDayInput').value = '';
+    return;
+  }
+  const targetMonday = getMondayOfWeek(parseDateStr(val));
+  const currentMonday = getMondayOfWeek(new Date());
+  const diffDays = Math.round((currentMonday - targetMonday) / (1000 * 60 * 60 * 24));
+  weekOffset = Math.max(0, Math.round(diffDays / 7));
+  renderWeekStrip();
+  selectDay(val);
+  $('searchDayRow').classList.add('hidden');
+  $('searchDayInput').value = '';
+});
+
+$('settingsToggle').addEventListener('click', () => {
+  $('settingsPanel').classList.toggle('hidden');
+});
+
+$('targetHours').addEventListener('change', async () => {
+  targetHoursPerDay = parseFloat($('targetHours').value) || 0;
+  await saveState();
+  renderAll();
+});
+
+$('fridayTargetHours').addEventListener('change', async () => {
+  fridayTargetHours = parseFloat($('fridayTargetHours').value) || 0;
+  await saveState();
+  renderAll();
+});
+
+$('addBreakBtn').addEventListener('click', () => addBreakRow());
+
+$('lunchTaken').addEventListener('change', () => {
+  $('lunchTimeRow').classList.toggle('hidden', !$('lunchTaken').checked);
+});
+
+$('cancelEditBtn').addEventListener('click', (evt) => {
+  evt.preventDefault();
+  clearEditingState();
+  $('breaksList').innerHTML = '';
+  $('lunchTaken').checked = false;
+  $('lunchTimeRow').classList.add('hidden');
+  $('entryDate').value = todayStr();
+  $('startHour').value = '';
+  $('startMinute').value = '';
+  $('endHour').value = '';
+  $('endMinute').value = '';
+});
+
+$('saveEntryBtn').addEventListener('click', async () => {
+  const date = $('entryDate').value || todayStr();
+  const startHour = parseInt($('startHour').value, 10);
+  const startMinute = parseInt($('startMinute').value || '0', 10) || 0;
+  const endHour = parseInt($('endHour').value, 10);
+  const endMinute = parseInt($('endMinute').value || '0', 10) || 0;
+  const endMeridiem = $('endMeridiem').value;
+
+  if (!startHour || !endHour) {
+    $('statusMsg').textContent = 'Please enter both a start and end time.';
+    return;
+  }
+
+  const breakMins = getAllBreakMinutes();
+  const breaksData = collectBreaksData();
+
+  const net = computeNet(startHour, startMinute, endHour, endMinute, endMeridiem, breakMins);
+  if (net < 0) {
+    $('statusMsg').textContent = 'Check your times — net hours came out negative.';
+    return;
+  }
+
+  const lunchTaken = $('lunchTaken').checked;
+  const lunchHour = lunchTaken ? (parseInt($('lunchHour').value, 10) || null) : null;
+  const lunchMinute = lunchTaken ? (parseInt($('lunchMinute').value || '0', 10) || 0) : null;
+  const lunchMeridiem = lunchTaken ? $('lunchMeridiem').value : null;
+
+  entries = entries.filter(e => e.date !== date && e.id !== editingId);
+  entries.push({
+    id: editingId || Date.now(),
+    date, startHour, startMinute, endHour, endMinute, endMeridiem,
+    breakMins, breaks: breaksData, net,
+    lunchTaken, lunchHour, lunchMinute, lunchMeridiem,
+    target: getTargetForDate(date)
+  });
+
+  const wasEditing = !!editingId;
+  await saveState();
+  renderAll();
+
+  $('breaksList').innerHTML = '';
+  $('lunchTaken').checked = false;
+  $('lunchTimeRow').classList.add('hidden');
+  clearEditingState();
+  $('statusMsg').textContent = wasEditing ? 'Entry updated.' : 'Entry saved.';
+  setTimeout(() => { $('statusMsg').textContent = ''; }, 2000);
+});
+
+$('entryDate').value = todayStr();
+updateClock();
+setInterval(updateClock, 1000);
+loadState();
+</script>
+
+</body>
+</html>
